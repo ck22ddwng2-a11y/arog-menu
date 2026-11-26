@@ -1,0 +1,585 @@
+
+
+<!DOCTYPE html>
+
+<html lang="tr">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AROG Restaurant Menu</title>
+
+<style>
+
+*{box-sizing:border-box}
+
+body{margin:0;background:#111;color:#f5e6c8;font-family:Arial,sans-serif}
+
+header{background:#080808;text-align:center;padding:22px 10px;border-bottom:2px solid #c49a45}
+
+header h1{color:#d8b15c;letter-spacing:5px;margin:0;font-size:32px}
+
+header p{margin:7px 0 0;color:#eee;font-size:13px;letter-spacing:2px}
+
+.language{display:flex;justify-content:center;gap:8px;padding:12px}
+
+.language button,.category button{background:#252525;color:#e5c77d;border:1px solid #a88643;border-radius:20px;padding:9px 14px;cursor:pointer}
+
+.language button.active,.category button.active{background:#b58a37;color:#111}
+
+.category{position:sticky;top:0;z-index:10;background:#111;display:flex;gap:8px;overflow-x:auto;padding:10px;white-space:nowrap;border-bottom:1px solid #8e713b}
+
+.category button{flex-shrink:0}
+
+main{padding:12px;max-width:750px;margin:auto}
+
+.section-title{color:#d8b15c;border-bottom:1px solid #80632f;padding-bottom:10px;margin-top:10px}
+
+.product{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 5px;border-bottom:1px solid #393126}
+
+.product-info{flex:1;min-width:0}
+
+.product-name{font-weight:bold;color:#f6e6c8;font-size:16px}
+
+.weight{font-size:12px;color:#b9a77f;margin-top:5px}
+
+.price{color:#e2bd65;font-weight:bold;white-space:nowrap}
+
+.quantity{display:flex;align-items:center;gap:8px}
+
+.quantity button{background:#b58a37;border:0;color:#111;font-size:18px;width:29px;height:29px;border-radius:50%;cursor:pointer;font-weight:bold}
+
+.quantity span{min-width:15px;text-align:center}
+
+.order{background:#1b1b1b;border:1px solid #a88643;border-radius:12px;padding:15px;margin:20px 0}
+
+.order h2{color:#d8b15c;margin-top:0}
+
+.order-item{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;gap:10px}
+
+.total{border-top:1px solid #8e713b;margin-top:10px;padding-top:12px;font-size:20px;font-weight:bold;color:#e5c77d;display:flex;justify-content:space-between}
+
+footer{text-align:center;color:#a9956e;padding:25px;font-size:12px}
+
+@media(max-width:400px){
+
+.product{gap:6px}
+
+.product-name{font-size:14px}
+
+.quantity{gap:5px}
+
+.price{font-size:14px}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>AROG</h1>
+
+<p>RESTAURANT MENU</p>
+
+</header>
+
+<div class="language">
+
+<button class="active" onclick="setLanguage('tr',this)">🇹🇷 Türkçe</button>
+
+<button onclick="setLanguage('bg',this)">🇧🇬 Български</button>
+
+<button onclick="setLanguage('en',this)">🇬🇧 English</button>
+
+</div>
+
+<nav class="category" id="categories"></nav>
+
+<main>
+
+<h2 class="section-title" id="sectionTitle"></h2>
+
+<div id="products"></div>
+
+<div class="order">
+
+<h2 id="orderTitle">🛒 Siparişiniz</h2>
+
+<div id="orderItems"></div>
+
+<div class="total">
+
+<span id="totalLabel">Toplam</span>
+
+<span id="total">0.00 €</span>
+
+</div>
+
+</div>
+
+</main>
+
+<footer>AROG RESTAURANT • AFİYET OLSUN</footer>
+
+<script>
+
+const labels={
+
+tr:{
+
+soup:"Çorbalar",main:"Ana Yemekler",pizza:"Pizzalar",
+
+pide:"Pideler",doner:"Döner",zakuski:"Zakuski",
+
+salati:"Salatalar",grill:"Izgara",garnitur:"Garnitürler",
+
+kizartmalar:"Kızartmalar",
+
+order:"🛒 Siparişiniz",total:"Toplam",
+
+empty:"Henüz ürün seçilmedi."
+
+},
+
+bg:{
+
+soup:"Супи",main:"Основни ястия",pizza:"Пици",
+
+pide:"Пидета",doner:"Дюнер",zakuski:"Закуски",
+
+salati:"Салати",grill:"Скара",garnitur:"Гарнитури",
+
+kizartmalar:"Пържени ястия",
+
+order:"🛒 Вашата поръчка",total:"Общо",
+
+empty:"Все още няма избрани продукти."
+
+},
+
+en:{
+
+soup:"Soups",main:"Main Dishes",pizza:"Pizzas",
+
+pide:"Pides",doner:"Doner",zakuski:"Snacks",
+
+salati:"Salads",grill:"Grill",garnitur:"Side Dishes",
+
+kizartmalar:"Fried Foods",
+
+order:"🛒 Your Order",total:"Total",
+
+empty:"No products selected yet."
+
+}
+
+};
+
+const categories=[
+
+"soup","main","pizza","pide","doner",
+
+"zakuski","salati","grill","garnitur","kizartmalar"
+
+];
+
+/* ÜRÜNLER: kategori, Türkçe, Bulgarca, İngilizce, fiyat, gramaj */
+
+const items=[
+
+/* ÇORBALAR */
+
+["soup","Cacık","Таратор","Tarator",2,250],
+
+["soup","İşkembe Çorbası","Шкембе чорба","Tripe Soup",2,250],
+
+["soup","Tavuk Çorbası","Пилешка супа","Chicken Soup",2,250],
+
+["soup","Kırmızı Mercimek Çorbası","Супа от червена леща","Red Lentil Soup",2,250],
+
+["soup","Domates Çorbası","Доматена супа","Tomato Soup",2,250],
+
+["soup","Köfteli Çorba","Супа топчета","Meatball Soup",2,250],
+
+/* ANA YEMEKLER */
+
+["main","Köy Usulü Sakatat Kavurma","Селски дробчета","Village-Style Offal",6,400],
+
+["main","Arnavut Usulü Sakatat Kavurma","Арнавудски дробчета","Albanian-Style Offal",8,400],
+
+["main","Lahmacun","Лахмаджун","Lahmacun",5,0],
+
+["main","Tavuk Dönerli İskender Kebap","Искендер с пилешки дюнер","Chicken Doner Iskender",7,450],
+
+["main","Kıyma Dönerli İskender Kebap","Искендер с дюнер от кайма","Minced Meat Doner Iskender",9,450],
+
+["main","İçli Köfte","Ичли кюфте","Stuffed Bulgur Kofte",5,300],
+
+/* PİZZALAR */
+
+["pizza","Margarita Pizza","Пица Маргарита","Margherita Pizza",5,400],
+
+["pizza","Jambonlu Pizza","Пица с шунка","Ham Pizza",5.5,450],
+
+["pizza","Türk Sucuklu Pizza","Пица с турски суджук","Turkish Sucuk Pizza",6.5,500],
+
+["pizza","Tavuk Dönerli Pizza","Пица с пилешки дюнер","Chicken Doner Pizza",6.5,500],
+
+["pizza","Ton Balıklı Pizza","Пица с риба тон","Tuna Pizza",5.5,500],
+
+["pizza","Kapriçyoza Pizza","Пица Капричоза","Capricciosa Pizza",7,550],
+
+["pizza","AROG Pizza","Пица АРОГ","AROG Pizza",9,650],
+
+/* PİDELER */
+
+["pide","Yumurtalı Pide","Пиде с яйце","Egg Pide",7,450],
+
+["pide","Kıymalı Pide","Пиде с кайма","Minced Meat Pide",7,450],
+
+["pide","Türk Sucuklu Pide","Пиде с турски суджук","Turkish Sucuk Pide",7,450],
+
+["pide","Ton Balıklı Pide","Пиде с риба тон","Tuna Pide",6,450],
+
+["pide","Karışık Pide","Мешено пиде","Mixed Pide",8,500],
+
+/* DÖNER */
+
+["doner","Tabak Döner","Дюнер в чиния","Doner Plate",5,400],
+
+["doner","Boks Döner","Бокс дюнер","Box Doner",4,350],
+
+["doner","Döner","Дюнер","Doner",4,300],
+
+["doner","Bomba Döner","Бомба дюнер","Bomba Doner",5,400],
+
+["doner","Takos","Такос","Tacos",4,350],
+
+/* ZAKUSKİ */
+
+["zakuski","Tost","Тост","Toast",2,200],
+
+["zakuski","Princesa","Принцеса","Princesa",2,200],
+
+["zakuski","Princesa sas salam","Принцеса със салам","Princesa with salami",2,200],
+
+["zakuski","Hot dog","Хот дог","Hot dog",2.5,250],
+
+["zakuski","Hamburger","Хамбургер","Hamburger",4,250],
+
+["zakuski","Hamburger menü","Хамбургер меню","Hamburger menu",8,400],
+
+["zakuski","Parlenka sas kashkaval","Пърленка с кашкавал","Flatbread with cheese",1.5,150],
+
+["zakuski","Parlenka sas kashkaval i salam","Пърленка с кашкавал и салам","Flatbread with cheese and salami",2,200],
+
+["zakuski","Kebap-köfte na pitka","Кебап-кюфте на питка","Kebab meatball in bread",2,200],
+
+/* SALATALAR */
+
+["salati","Şopska salata","Шопска салата","Shopska Salad",5,350],
+
+["salati","Sezar Salata","Цезар салата","Caesar Salad",6,350],
+
+["salati","Coban salata","Овчарска салата","Shepherd's Salad",6,350],
+
+["salati","Lahana Salatası","Зелева салата","Cabbage Salad",3,300],
+
+/* IZGARA */
+
+["grill","Köfte","Кюфте","Meatball",1.5,80],
+
+["grill","Kebap","Кебап","Kebab",1.5,80],
+
+["grill","Ev Yapımı Köfte","Домашно кюфте","Homemade Meatball",2,80],
+
+["grill","Parmak Sucuk","Карначи","Finger Sucuk",7,500],
+
+["grill","Tavuk Şiş","Пилешки шиш","Chicken Skewer",3.5,130],
+
+["grill","Dana Şiş","Телешки шиш","Beef Skewer",5,130],
+
+["grill","Domuz Şiş","Свински шиш","Pork Skewer",4,130],
+
+["grill","Domuz Pirzola","Свинска пържола","Pork Chop",4.5,200],
+
+["grill","Tavuk Pirzola","Пилешка пържола","Chicken Chop",4.5,200],
+
+["grill","Karışık Izgara","Мешена скара","Mixed Grill",45,"1,5 kg"],
+
+/* GARNİTÜRLER */
+
+["garnitur","Bulgur Pilavı","Булгур пилаф","Bulgur Pilaf",2.5,150],
+
+["garnitur","Pilav","Ориз","Rice",2,150],
+
+["garnitur","Domates Salatalık","Домати и краставици","Tomato and Cucumber",1.5,100],
+
+["garnitur","Kaynatılmış Patates","Варени картофи","Boiled Potatoes",3,200],
+
+["garnitur","Kızartılmış Patates","Пържени картофи","French Fries",3,300],
+
+["garnitur","Lahana Salatası","Зелева салата","Cabbage Salad",2.5,100],
+
+["garnitur","Beyaz Peynir","Бяло сирене","White Cheese",1,60],
+
+["garnitur","Lyutenitsa","Лютеница","Lyutenitsa",1,60],
+
+/* KIZARTMALAR */
+
+["kizartmalar","Patates Kızartması (200 g)","Пържени картофи (200 г)","French Fries (200 g)",3,200],
+
+["kizartmalar","Patates Kızartması (250 g)","Пържени картофи (250 г)","French Fries (250 g)",3.5,250],
+
+["kizartmalar","Kaşar Peynirli Pane Lokmalar","Кашкавалени хапки","Breaded Kashkaval Bites",5,"10 adet / 200 g"],
+
+["kizartmalar","Tavuk Lokmaları","Пилешки хапки","Chicken Bites",5,"10 adet / 200 g"],
+
+["kizartmalar","Pane Kaşar Peyniri","Кашкавал пане","Breaded Kashkaval Cheese",6.5,100],
+
+["kizartmalar","Çaça Balığı","Цаца","Fried Sprat",4.5,200],
+
+["kizartmalar","Tavuk Kanatları","Крилца","Chicken Wings",7,250],
+
+["kizartmalar","Cornflakes Kaplı Tavuk Çubukları","Пилешки пурички с корнфлекс","Cornflake Chicken Sticks",5.5,200]
+
+];
+
+let language="tr";
+
+let selectedCategory="soup";
+
+let quantities={};
+
+function setLanguage(lang,button){
+
+language=lang;
+
+document.querySelectorAll(".language button").forEach(b=>{
+
+b.classList.remove("active");
+
+});
+
+button.classList.add("active");
+
+renderCategories();
+
+renderProducts();
+
+renderOrder();
+
+}
+
+function renderCategories(){
+
+const nav=document.getElementById("categories");
+
+nav.innerHTML="";
+
+categories.forEach(cat=>{
+
+const btn=document.createElement("button");
+
+btn.textContent=labels[language][cat];
+
+if(cat===selectedCategory)btn.classList.add("active");
+
+btn.onclick=()=>{
+
+selectedCategory=cat;
+
+renderCategories();
+
+renderProducts();
+
+};
+
+nav.appendChild(btn);
+
+});
+
+}
+
+function getName(item){
+
+return item[language==="tr"?1:language==="bg"?2:3];
+
+}
+
+function getWeight(item){
+
+if(typeof item[5]==="number"){
+
+return item[5] ? item[5]+" g" : "";
+
+}
+
+if(item[0]==="kizartmalar" && item[5]==="10 adet / 200 g"){
+
+if(language==="bg")return "10 бр. / 200 г";
+
+if(language==="en")return "10 pcs / 200 g";
+
+}
+
+return item[5];
+
+}
+
+function renderProducts(){
+
+document.getElementById("sectionTitle").textContent=
+
+labels[language][selectedCategory];
+
+const container=document.getElementById("products");
+
+container.innerHTML="";
+
+items.forEach((item,index)=>{
+
+if(item[0]!==selectedCategory)return;
+
+const quantity=quantities[index]||0;
+
+const product=document.createElement("div");
+
+product.className="product";
+
+const info=document.createElement("div");
+
+info.className="product-info";
+
+const productName=document.createElement("div");
+
+productName.className="product-name";
+
+productName.textContent=getName(item);
+
+const weight=document.createElement("div");
+
+weight.className="weight";
+
+weight.textContent=getWeight(item);
+
+info.append(productName,weight);
+
+const price=document.createElement("div");
+
+price.className="price";
+
+price.textContent=item[4].toFixed(2)+" €";
+
+const controls=document.createElement("div");
+
+controls.className="quantity";
+
+const minus=document.createElement("button");
+
+minus.textContent="−";
+
+minus.onclick=()=>changeQuantity(index,-1);
+
+const count=document.createElement("span");
+
+count.textContent=quantity;
+
+const plus=document.createElement("button");
+
+plus.textContent="+";
+
+plus.onclick=()=>changeQuantity(index,1);
+
+controls.append(minus,count,plus);
+
+product.append(info,price,controls);
+
+container.appendChild(product);
+
+});
+
+}
+
+function changeQuantity(index,change){
+
+quantities[index]=Math.max(0,(quantities[index]||0)+change);
+
+renderProducts();
+
+renderOrder();
+
+}
+
+function renderOrder(){
+
+document.getElementById("orderTitle").textContent=labels[language].order;
+
+document.getElementById("totalLabel").textContent=labels[language].total;
+
+const container=document.getElementById("orderItems");
+
+container.innerHTML="";
+
+let total=0;
+
+let hasItems=false;
+
+items.forEach((item,index)=>{
+
+const quantity=quantities[index]||0;
+
+if(quantity===0)return;
+
+hasItems=true;
+
+const line=document.createElement("div");
+
+line.className="order-item";
+
+const name=document.createElement("span");
+
+name.textContent=quantity+" × "+getName(item);
+
+const price=document.createElement("span");
+
+price.textContent=(quantity*item[4]).toFixed(2)+" €";
+
+line.append(name,price);
+
+container.appendChild(line);
+
+total+=quantity*item[4];
+
+});
+
+if(!hasItems){
+
+container.textContent=labels[language].empty;
+
+}
+
+document.getElementById("total").textContent=
+
+total.toFixed(2)+" €";
+
+}
+
+renderCategories();
+
+renderProducts();
+
+renderOrder();
+
+</script>
+
+</body>
+
+</html>
